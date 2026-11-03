@@ -18,8 +18,26 @@ final class ClipboardHostingView<Content: View>: NSHostingView<Content> {
   override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 }
 
+/// A dedicated header region keeps drag gestures separate from row selection and search.
+struct PopupDragHandle: NSViewRepresentable {
+  func makeNSView(context: Context) -> PopupDragView { PopupDragView() }
+  func updateNSView(_ view: PopupDragView, context: Context) {}
+}
+final class PopupDragView: NSView {
+  override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+  override func mouseDown(with event: NSEvent) { window?.performDrag(with: event) }
+}
+
 enum PopupLayout {
   static let width: CGFloat = 420
+  static func draggedFrame(size: NSSize, previous: NSRect, screen: NSRect) -> NSRect {
+    let width = min(size.width, screen.width)
+    let height = min(size.height, screen.height)
+    return NSRect(
+      x: max(screen.minX, min(previous.minX, screen.maxX - width)),
+      y: max(screen.minY, min(previous.maxY - height, screen.maxY - height)),
+      width: width, height: height)
+  }
   static func size(count: Int, navigation: Bool, message: Bool, screen: NSRect) -> NSSize {
     let rows = min(max(count, 0), 6)
     let desired: CGFloat = rows == 0 ? 220 : max(208, 132 + CGFloat(rows) * 64)

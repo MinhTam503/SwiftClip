@@ -607,6 +607,52 @@ final class SwiftClipTests: XCTestCase {
     session.start()
     XCTAssertEqual(sends, 0)
   }
+  func testClearConfirmationKeepsPopupOpenOnCancelAndConfirm() throws {
+    _ = NSApplication.shared
+    let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    let model = HistoryModel(root: root)
+    let app = AppDelegate(model: model)
+    let panel = ClipboardPanel(clipboardRect: NSRect(x: 0, y: 0, width: 420, height: 300))
+    panel.isReleasedWhenClosed = false
+    panel.delegate = app
+    app.panel = panel
+    defer {
+      app.close()
+      model.queue.sync {}
+      try? FileManager.default.removeItem(at: root)
+    }
+    model.save(
+      payload("synthetic history"), kind: "text", preview: "synthetic history", source: "test")
+    model.queue.sync {}
+    for response in [NSApplication.ModalResponse.alertFirstButtonReturn, .alertSecondButtonReturn] {
+      app.clearHistory()
+      XCTAssertTrue(app.historyConfirmationInFlight)
+      let sheet = try XCTUnwrap(panel.attachedSheet)
+      app.windowDidResignKey(Notification(name: NSWindow.didResignKeyNotification, object: panel))
+      XCTAssertTrue(app.panel === panel)
+      panel.endSheet(sheet, returnCode: response)
+      RunLoop.main.run(until: Date().addingTimeInterval(0.4))
+      XCTAssertFalse(app.historyConfirmationInFlight)
+      XCTAssertTrue(app.panel === panel)
+      model.queue.sync {}
+      let repo = try Repository(root: root)
+      XCTAssertEqual(try repo.list().count, response == .alertFirstButtonReturn ? 1 : 0)
+    }
+  }
+
+  func testDraggedPopupKeepsTopEdgeWhenHistoryHeightChanges() {
+    let screen = NSRect(x: -1440, y: 0, width: 1440, height: 900)
+    let previous = NSRect(x: -1000, y: 400, width: 420, height: 400)
+    let smaller = PopupLayout.draggedFrame(
+      size: NSSize(width: 420, height: 220), previous: previous, screen: screen)
+    XCTAssertEqual(smaller.minX, previous.minX)
+    XCTAssertEqual(smaller.maxY, previous.maxY)
+    let edge = PopupLayout.draggedFrame(
+      size: NSSize(width: 420, height: 460),
+      previous: NSRect(x: -100, y: -300, width: 420, height: 220), screen: screen)
+    XCTAssertTrue(screen.contains(edge))
+  }
+
   func testClipboardPanelDoesNotActivateOwnerAndAcceptsFirstClick() {
     _ = NSApplication.shared
     let panel = ClipboardPanel(clipboardRect: NSRect(x: 0, y: 0, width: 420, height: 220))

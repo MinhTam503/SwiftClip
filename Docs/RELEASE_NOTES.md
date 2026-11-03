@@ -1,5 +1,10 @@
 # Release notes
 
+## 1.0.7
+
+- Clear All uses a confirmation sheet and keeps clipboard history open after cancellation or deletion.
+- Drag the popup by its header; row updates preserve the user-selected position during that opening.
+
 ## 1.0.6
 
 - Hardened Runtime signing without runtime exception entitlements.

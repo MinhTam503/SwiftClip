@@ -12,8 +12,10 @@ struct PopupView: View {
   var body: some View {
     VStack(spacing: 0) {
       HStack {
-        Label(L10n.t(.appName), systemImage: "clipboard").font(.headline)
-        Spacer()
+        HStack {
+          Label(L10n.t(.appName), systemImage: "clipboard").font(.headline)
+          Spacer()
+        }.overlay { PopupDragHandle().accessibilityHidden(true) }
         if Settings.shared.bool("paused") {
           Text(L10n.t(.paused)).font(.caption).foregroundStyle(.secondary)
         }

@@ -30,6 +30,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
   var previewWindow: NSWindow?
   private var languageObserver: NSObjectProtocol?
   var selectionInFlight = false
+  private(set) var historyConfirmationInFlight = false
+  private var popupWasMoved = false
+  private var positioningPopup = false
   private var openingPopup = false
   private var presentationGeneration = 0
   private var popupScreen = NSRect.zero
@@ -212,6 +215,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     p.delegate = self
     p.contentView = ClipboardHostingView(rootView: PopupView(model: model, app: self))
     panel = p
+    popupWasMoved = false
     resizePopup()
     model.load()
     // A nonactivating panel borrows key focus without deactivating the original app.
@@ -220,7 +224,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
       NotificationCenter.default.post(name: .init("SwiftClipFocusSearch"), object: nil)
     }
     clickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) {
-      [weak self] _ in self?.close()
+      [weak self] _ in
+      guard let self, !self.historyConfirmationInFlight else { return }
+      self.close()
     }
     keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
       guard let self, NSApp.keyWindow === self.panel else { return event }
@@ -269,16 +275,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
   }
   private func resizePopup() {
     guard let panel else { return }
+    if popupWasMoved, let screen = panel.screen { popupScreen = screen.visibleFrame }
     let size = PopupLayout.size(
       count: model.clips.count, navigation: model.hasMore || model.pageOffset > 0,
       message: !model.message.isEmpty, screen: popupScreen)
-    panel.setFrame(
-      PopupLayout.frame(
-        size: size, screen: popupScreen, pointer: popupPointer, avoiding: popupAvoid), display: true
-    )
+    let frame =
+      popupWasMoved
+      ? PopupLayout.draggedFrame(size: size, previous: panel.frame, screen: popupScreen)
+      : PopupLayout.frame(
+        size: size, screen: popupScreen, pointer: popupPointer, avoiding: popupAvoid)
+    positioningPopup = true
+    panel.setFrame(frame, display: true)
+    positioningPopup = false
+  }
+  func windowDidMove(_ notification: Notification) {
+    guard let window = notification.object as? NSWindow, window === panel, !positioningPopup else {
+      return
+    }
+    popupWasMoved = true
   }
   func windowDidResignKey(_ notification: Notification) {
-    if let window = notification.object as? NSWindow, window === panel, !selectionInFlight {
+    if let window = notification.object as? NSWindow, window === panel, !selectionInFlight,
+      !historyConfirmationInFlight
+    {
       close()
     }
   }
@@ -340,12 +359,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     if alert.runModal() == .alertSecondButtonReturn { PasteManager.openAccessibility() }
   }
   func clearHistory() {
+    guard !historyConfirmationInFlight else { return }
     let alert = NSAlert()
     alert.messageText = L10n.t(.clearAllTitle)
     alert.informativeText = L10n.t(.clearAllBody)
     alert.addButton(withTitle: L10n.t(.cancel))
     alert.addButton(withTitle: L10n.t(.clearAllConfirm))
-    if alert.runModal() == .alertSecondButtonReturn { model.perform { try $0.clear() } }
+    if let panel {
+      historyConfirmationInFlight = true
+      alert.beginSheetModal(for: panel) { [weak self, weak panel] response in
+        guard let self else { return }
+        self.historyConfirmationInFlight = false
+        if response == .alertSecondButtonReturn { self.model.perform { try $0.clear() } }
+        if let panel, self.panel === panel { panel.makeKeyAndOrderFront(nil) }
+      }
+    } else if alert.runModal() == .alertSecondButtonReturn {
+      model.perform { try $0.clear() }
+    }
   }
   func preview(_ clip: Clip) {
     model.payload(clip) { [weak self] payload in

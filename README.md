@@ -55,6 +55,8 @@ Copy something in another app, then click the menu bar icon or press **⌘⇧V**
 
 Right-click an item for **Paste, Copy, Pin/Unpin, Preview or Delete**. Copy writes to the clipboard without automatic paste. Page controls browse older/newer results without keeping the entire history in RAM. Right-click the menu bar icon for Open Clipboard, Settings and Quit.
 
+Drag the popup by its title/header area to move it. Its position stays in place as history updates during that opening; reopening uses automatic placement. Clear All keeps the history popup open after either Cancel or confirmation.
+
 The popup attempts to avoid a focused text control using Accessibility geometry. When that metadata is unavailable it positions away from the pointer. Large editors and small screens can leave no completely separate area.
 
 ### Accessibility and Auto Paste
