@@ -41,7 +41,7 @@ jobs:
           bash -n Scripts/*.sh
           swift test --scratch-path .build/Tests
       - name: Build universal ad-hoc signed DMG
-        run: bash Scripts/build_release.sh
+        run: bash -x Scripts/build_release.sh
       - name: Checksums
         working-directory: dist
         run: shasum -a 256 SwiftClip*.dmg > SHA256SUMS

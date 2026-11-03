@@ -30,11 +30,9 @@ codesign --verify --deep --strict "$stage/SwiftClip.app"
 mkdir "$stage/dmg"
 ditto "$stage/SwiftClip.app" "$stage/dmg/SwiftClip.app"
 ln -s /Applications "$stage/dmg/Applications"
-if diskutil image create from --help >/dev/null 2>&1; then
-  diskutil image create from --volumeName SwiftClip --format UDZO "$stage/dmg" "$stage/$artifact.dmg" > "$stage/dmg.log"
-else
-  hdiutil create -volname SwiftClip -srcfolder "$stage/dmg" -format UDZO "$stage/$artifact.dmg" > "$stage/dmg.log"
-fi
+# hdiutil is available on every supported macOS runner. New diskutil image
+# subcommands vary between macOS versions and are not suitable for CI probing.
+hdiutil create -volname SwiftClip -srcfolder "$stage/dmg" -format UDZO "$stage/$artifact.dmg" > "$stage/dmg.log" 2>&1 || { cat "$stage/dmg.log"; exit 1; }
 hdiutil verify "$stage/$artifact.dmg" > "$stage/verify.log"
 # -n plus the source check protects an existing image even if another process creates it.
 mv -n "$stage/$artifact.dmg" "dist/$artifact.dmg"
