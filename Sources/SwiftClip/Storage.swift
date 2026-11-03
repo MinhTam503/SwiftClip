@@ -4,6 +4,24 @@ import ImageIO
 import SQLite3
 import UniformTypeIdentifiers
 
+/// Database metadata is untrusted: never resolve it outside the history store.
+enum HistoryFiles {
+  static func url(root: URL, path: String, directory: String, suffix: String) throws -> URL {
+    let parts = path.split(separator: "/", omittingEmptySubsequences: false)
+    guard parts.count == 2, parts[0] == Substring(directory),
+      parts[1].hasSuffix(suffix),
+      String(parts[1].dropLast(suffix.count)).range(
+        of: "^[A-Za-z0-9_-]+$", options: .regularExpression) != nil
+    else { throw CocoaError(.fileReadInvalidFileName) }
+    let canonicalRoot = root.resolvingSymlinksInPath().standardizedFileURL
+    let url = canonicalRoot.appendingPathComponent(path).standardizedFileURL
+    guard url.resolvingSymlinksInPath().path == url.path else {
+      throw CocoaError(.fileReadInvalidFileName)
+    }
+    return url
+  }
+}
+
 final class Repository {
   private var db: OpaquePointer?
   let root: URL
@@ -13,15 +31,29 @@ final class Repository {
       .appendingPathComponent("SwiftClip")
   ) throws {
     self.root = root
-    for dir in ["Database", "Payloads", "Thumbnails"] {
+    for dir in ["", "Database", "Payloads", "Thumbnails"] {
+      let directory = dir.isEmpty ? root : root.appendingPathComponent(dir)
+      if (try? directory.resourceValues(forKeys: [.isSymbolicLinkKey]).isSymbolicLink) == true {
+        throw CocoaError(.fileReadInvalidFileName)
+      }
       try FileManager.default.createDirectory(
-        at: root.appendingPathComponent(dir), withIntermediateDirectories: true,
+        at: directory, withIntermediateDirectories: true,
         attributes: [.posixPermissions: 0o700])
+      try FileManager.default.setAttributes(
+        [.posixPermissions: 0o700], ofItemAtPath: directory.path)
+    }
+    for name in ["clipboard.sqlite", "clipboard.sqlite-wal", "clipboard.sqlite-shm"] {
+      let file = root.appendingPathComponent("Database/" + name)
+      if (try? file.resourceValues(forKeys: [.isSymbolicLinkKey]).isSymbolicLink) == true {
+        throw CocoaError(.fileReadInvalidFileName)
+      }
     }
     guard
       sqlite3_open(root.appendingPathComponent("Database/clipboard.sqlite").path, &db) == SQLITE_OK
     else { throw error() }
-    try exec("PRAGMA journal_mode=WAL; PRAGMA busy_timeout=3000;")
+    try exec(
+      "PRAGMA journal_mode=WAL; PRAGMA busy_timeout=3000; PRAGMA secure_delete=ON; PRAGMA trusted_schema=OFF;"
+    )
     let version = try statement("PRAGMA user_version")
     let v = sqlite3_step(version) == SQLITE_ROW ? sqlite3_column_int(version, 0) : 0
     sqlite3_finalize(version)
@@ -68,6 +100,17 @@ final class Repository {
       "CREATE INDEX IF NOT EXISTS clips_order ON clips(pinned DESC,updated DESC); CREATE INDEX IF NOT EXISTS clips_path ON clips(path); CREATE INDEX IF NOT EXISTS clips_thumbnail ON clips(thumbnail)"
     )
     try cleanupOrphans()
+    for dir in ["Database", "Payloads", "Thumbnails"] {
+      for file in try FileManager.default.contentsOfDirectory(
+        at: root.appendingPathComponent(dir),
+        includingPropertiesForKeys: [.isRegularFileKey, .isSymbolicLinkKey])
+      where (try file.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true {
+        guard (try file.resourceValues(forKeys: [.isSymbolicLinkKey]).isSymbolicLink) != true else {
+          throw CocoaError(.fileReadInvalidFileName)
+        }
+        try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: file.path)
+      }
+    }
   }
   deinit { sqlite3_close(db) }
   private func error() -> NSError {
@@ -110,6 +153,8 @@ final class Repository {
     let data = try JSONEncoder().encode(payload)
     try data.write(
       to: root.appendingPathComponent(path), options: [.atomic, .completeFileProtectionUnlessOpen])
+    try FileManager.default.setAttributes(
+      [.posixPermissions: 0o600], ofItemAtPath: root.appendingPathComponent(path).path)
     var thumbnail = ""
     if kind == "image",
       let r = payload.items.flatMap({ $0 }).first(where: {
@@ -129,7 +174,11 @@ final class Repository {
         root.appendingPathComponent(relative) as CFURL, UTType.png.identifier as CFString, 1, nil)
       {
         CGImageDestinationAddImage(dest, image, nil)
-        if CGImageDestinationFinalize(dest) { thumbnail = relative }
+        if CGImageDestinationFinalize(dest) {
+          thumbnail = relative
+          try FileManager.default.setAttributes(
+            [.posixPermissions: 0o600], ofItemAtPath: root.appendingPathComponent(relative).path)
+        }
       }
     }
     do {
@@ -179,7 +228,10 @@ final class Repository {
   }
   func payload(_ clip: Clip) throws -> Payload {
     try JSONDecoder().decode(
-      Payload.self, from: Data(contentsOf: root.appendingPathComponent(clip.path)))
+      Payload.self,
+      from: Data(
+        contentsOf: HistoryFiles.url(
+          root: root, path: clip.path, directory: "Payloads", suffix: ".json")))
   }
   func pin(_ clip: Clip) throws {
     let s = try statement("UPDATE clips SET pinned=? WHERE id=?")
@@ -194,12 +246,18 @@ final class Repository {
     var files = [String]()
     if sqlite3_step(s) == SQLITE_ROW { files = [str(s, 0), str(s, 1)] }
     sqlite3_finalize(s)
+    let urls = try files.filter { !$0.isEmpty }.map { file in
+      try HistoryFiles.url(
+        root: root, path: file,
+        directory: file.hasPrefix("Payloads/") ? "Payloads" : "Thumbnails",
+        suffix: file.hasPrefix("Payloads/") ? ".json" : ".png")
+    }
     let d = try statement("DELETE FROM clips WHERE id=?")
     defer { sqlite3_finalize(d) }
     bind(d, 1, id)
     try run(d)
-    for file in files where !file.isEmpty {
-      try? FileManager.default.removeItem(at: root.appendingPathComponent(file))
+    for url in urls where FileManager.default.fileExists(atPath: url.path) {
+      try FileManager.default.removeItem(at: url)
     }
   }
   func clear() throws {
@@ -236,6 +294,7 @@ final class Repository {
         at: root.appendingPathComponent(dir), includingPropertiesForKeys: nil,
         options: [.skipsHiddenFiles])
       while let url = iterator?.nextObject() as? URL {
+        iterator?.skipDescendants()
         let relative = dir + "/" + url.lastPathComponent
         sqlite3_reset(check)
         sqlite3_clear_bindings(check)

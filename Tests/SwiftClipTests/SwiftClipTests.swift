@@ -17,6 +17,69 @@ final class SwiftClipTests: XCTestCase {
     defer { try? FileManager.default.removeItem(at: root) }
     try body(Repository(root: root), root)
   }
+  func testHistoryPathsRejectTraversalAndSymlinks() throws {
+    try withRepository { repo, root in
+      let outside = root.deletingLastPathComponent().appendingPathComponent(
+        UUID().uuidString + ".json")
+      try Data("synthetic outside file".utf8).write(to: outside)
+      defer { try? FileManager.default.removeItem(at: outside) }
+      let link = root.appendingPathComponent("Payloads/link.json")
+      try FileManager.default.createSymbolicLink(at: link, withDestinationURL: outside)
+      for path in [
+        "../" + outside.lastPathComponent, outside.path, "Payloads/../outside.json",
+        "Payloads/link.json",
+      ] {
+        let clip = Clip(
+          id: "test", kind: "text", preview: "", path: path,
+          thumbnail: nil, date: Date(), pinned: false, size: 0)
+        XCTAssertThrowsError(try repo.payload(clip))
+      }
+      try repo.save(payload("safe"), kind: "text", preview: "safe", source: "test", limit: 0)
+      let clip = try XCTUnwrap(repo.list().first)
+      var db: OpaquePointer?
+      XCTAssertEqual(
+        sqlite3_open(root.appendingPathComponent("Database/clipboard.sqlite").path, &db), SQLITE_OK)
+      defer { sqlite3_close(db) }
+      XCTAssertEqual(
+        sqlite3_exec(db, "UPDATE clips SET path='Payloads/link.json'", nil, nil, nil), SQLITE_OK)
+      XCTAssertThrowsError(try repo.delete(clip.id))
+      XCTAssertTrue(FileManager.default.fileExists(atPath: outside.path))
+    }
+  }
+
+  func testPrivatePermissionsAndClearRemovesSearchText() throws {
+    try withRepository { repo, root in
+      let marker = "synthetic-deletion-marker-" + UUID().uuidString
+      try repo.save(payload(marker), kind: "text", preview: marker, source: "test", limit: 0)
+      let clip = try XCTUnwrap(repo.list().first)
+      for (path, expected) in [
+        (root.path, 0o700),
+        (root.appendingPathComponent("Database").path, 0o700),
+        (root.appendingPathComponent(clip.path).path, 0o600),
+      ] {
+        let attrs = try FileManager.default.attributesOfItem(atPath: path)
+        XCTAssertEqual((attrs[.posixPermissions] as? NSNumber)?.intValue, expected)
+      }
+      try repo.clear()
+      let database = try Data(contentsOf: root.appendingPathComponent("Database/clipboard.sqlite"))
+      XCTAssertNil(database.range(of: Data(marker.utf8)))
+      XCTAssertFalse(
+        FileManager.default.fileExists(atPath: root.appendingPathComponent(clip.path).path))
+    }
+  }
+
+  func testSymlinkedStoreIsRejected() throws {
+    let base = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: base) }
+    let root = base.appendingPathComponent("store")
+    let outside = base.appendingPathComponent("outside")
+    try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+    try FileManager.default.createDirectory(at: outside, withIntermediateDirectories: true)
+    try FileManager.default.createSymbolicLink(
+      at: root.appendingPathComponent("Payloads"), withDestinationURL: outside)
+    XCTAssertThrowsError(try Repository(root: root))
+  }
+
   func testHashAndRepresentationOrder() {
     XCTAssertEqual(payload("abc").hash, payload("abc").hash)
     XCTAssertNotEqual(payload("abc").hash, payload("ABC").hash)

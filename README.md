@@ -143,3 +143,5 @@ For a suspected vulnerability or disclosure risk, follow [SECURITY.md](SECURITY.
 ## License
 
 [MIT](LICENSE). The application icon is included with this project; its generation prompt is in `Resources/ICON_PROMPT.txt`.
+
+See [SECURITY.md](SECURITY.md) for runtime protections, storage boundaries and remaining limitations.

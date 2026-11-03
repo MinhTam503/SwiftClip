@@ -1,5 +1,12 @@
 # Release notes
 
+## 1.0.6
+
+- Hardened Runtime signing without runtime exception entitlements.
+- Restrict history payload/thumbnail paths and reject symlink redirection.
+- Apply private storage permissions and SQLite secure deletion for future removals.
+- Audit reachable Git history for high-confidence secrets and personal home paths.
+
 ## 1.0.5
 
 - Include the MIT license inside the installed app bundle as well as the source repository.

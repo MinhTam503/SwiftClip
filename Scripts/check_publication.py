@@ -56,6 +56,39 @@ for name in paths:
     if "https://github.com/" + "OWNER/" in text:
         failures.append(f"Unresolved repository placeholder: {name}")
 
+# Inspect every reachable source blob, including files removed in older commits.
+# CI checks out complete history so this also covers previously published tags.
+seen = set()
+commits = git("rev-list", "--all").decode().split()
+for commit in commits:
+    for entry in git("ls-tree", "-rz", commit).split(b"\0"):
+        if not entry:
+            continue
+        metadata, raw_name = entry.split(b"\t", 1)
+        mode, kind, oid = metadata.split()
+        if kind != b"blob" or oid in seen:
+            continue
+        seen.add(oid)
+        name = raw_name.decode("utf-8", errors="replace")
+        data = git("cat-file", "blob", oid.decode())
+        if mode == b"120000":
+            failures.append(f"Historical symlink requires review: {name}")
+        try:
+            content = data.decode("utf-8")
+        except UnicodeDecodeError:
+            continue  # Image metadata is reviewed separately; compressed bytes are not text.
+        for label, pattern in patterns:
+            if pattern.search(content):
+                failures.append(f"Historical {label}: {name} (value redacted)")
+        if re.search(r"/(?:Users|home)/[A-Za-z0-9._-]+/", content):
+            failures.append(f"Historical home path: {name}")
+        for address in re.findall(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", content):
+            if not address.endswith("@users.noreply.github.com") and not address.endswith("@example.com"):
+                failures.append(f"Personal email requires review: {name} (value redacted)")
+for identity in git("log", "--all", "--format=%ae%n%ce").decode().splitlines():
+    if not identity.endswith("@users.noreply.github.com"):
+        failures.append("Commit uses a non-noreply email (value redacted)")
+
 # Ensure risky generated/local files really stay outside the publication set.
 ignored_examples = [
     "dist/SwiftClip1.0.4.dmg", ".build/output", ".env", "test.sqlite", "test.sqlite-wal",
@@ -69,4 +102,4 @@ for name in ignored_examples:
 if failures:
     print("\n".join(failures), file=sys.stderr)
     sys.exit(1)
-print(f"Publication audit passed: {len(paths)} source files; generated/private path checks and high-confidence credential patterns passed.")
+print(f"Publication audit passed: {len(paths)} source files; generated/private path checks and high-confidence credential patterns passed; {len(commits)} commits / {len(seen)} historical blobs checked.")

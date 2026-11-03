@@ -20,8 +20,8 @@ labels = {
     'after_100_popup_cycles': 'Sau 100 lần mở/đóng',
     'after_clear_all': 'Sau xóa toàn bộ lịch sử',
 }
-lines = ['# Benchmark SwiftClip — 02/11/2026', '',
-         'Máy arm64, macOS 27.2 (26B123), Xcode 27.2 (27B52). Release universal, chạy native arm64, không gắn Instruments vào các lần đo dưới đây.', '',
+lines = ['# SwiftClip synthetic benchmark', '',
+         'Environment details intentionally omitted; record only synthetic workload measurements.', '',
          'Số đo dùng Mach TASK_VM_INFO: physical footprint và resident size (RSS) là hai chỉ số khác nhau. MiB = 1.048.576 bytes. Không thay RSS bằng physical footprint hoặc ngược lại khi so với mục tiêu RAM.', '',
          'Fixture: database/pasteboard tạm riêng; Unlimited; 1.000 text nhiều dòng; 100 PNG 512 × 512 ngẫu nhiên; trang 60 mục; popup mở/đóng 100 lần ở bài dài, 20 lần ở bài ngắn; sau đó Clear All. Đây là tải tổng hợp, không đại diện mọi kích thước ảnh hoặc ứng dụng nguồn.', '']
 for title, data in [('Baseline Release, 10 phút idle độc lập', baseline), ('Executable Release cuối, bài đo đối chiếu ngắn', final)]:

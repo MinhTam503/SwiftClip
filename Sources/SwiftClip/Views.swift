@@ -146,8 +146,12 @@ struct ClipRow: View {
     .accessibilityElement(children: .combine)
     .task(id: clip.thumbnail) {
       guard let path = clip.thumbnail else { return }
-      let url = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        .appendingPathComponent("SwiftClip").appendingPathComponent(path)
+      let root = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        .appendingPathComponent("SwiftClip")
+      guard
+        let url = try? HistoryFiles.url(
+          root: root, path: path, directory: "Thumbnails", suffix: ".png")
+      else { return }
       let data = await Task.detached(priority: .utility) { try? Data(contentsOf: url) }.value
       guard !Task.isCancelled else { return }
       if let data { thumbnail = NSImage(data: data) }

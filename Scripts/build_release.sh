@@ -23,8 +23,15 @@ built='.build/ReleaseApp/Build/Products/Release/SwiftClip.app'
 [[ -x "$built/Contents/MacOS/SwiftClip" ]]
 [[ -f "$built/Contents/Resources/LICENSE" ]]
 ditto "$built" "$stage/SwiftClip.app"
-codesign --force --sign - --timestamp=none "$stage/SwiftClip.app"
+codesign --force --sign - --options runtime --timestamp=none "$stage/SwiftClip.app"
 codesign --verify --deep --strict "$stage/SwiftClip.app"
+codesign -dv "$stage/SwiftClip.app" 2>&1 | grep -q 'flags=.*runtime'
+codesign -d --entitlements - "$stage/SwiftClip.app" > "$stage/entitlements.plist" 2>/dev/null
+python3 - "$stage/entitlements.plist" <<'PY_ENTITLEMENTS'
+import pathlib, plistlib, sys
+raw = pathlib.Path(sys.argv[1]).read_bytes()
+assert not raw.strip() or not plistlib.loads(raw), "Release must not carry runtime exception/debug entitlements"
+PY_ENTITLEMENTS
 [[ -f "$stage/SwiftClip.app/Contents/Resources/en.lproj/Localizable.strings" ]]
 [[ -f "$stage/SwiftClip.app/Contents/Resources/vi.lproj/Localizable.strings" ]]
 mkdir "$stage/dmg"

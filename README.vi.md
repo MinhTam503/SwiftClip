@@ -124,3 +124,5 @@ Hướng dẫn maintainer: [RELEASING.md](RELEASING.md). Build/test tự động
 Đọc [CONTRIBUTING.md](CONTRIBUTING.md), báo lỗi qua [Issues](https://github.com/MinhTam503/SwiftClip/issues) kèm version/macOS/các bước tái hiện. Chỉ dùng dữ liệu thử, che thông tin screenshot/log; không đăng lịch sử clipboard, token hoặc khóa ký. Vấn đề bảo mật xem [SECURITY.md](SECURITY.md).
 
 License [MIT](LICENSE). Icon được kèm trong dự án, prompt tạo nằm ở `Resources/ICON_PROMPT.txt`.
+
+Xem [SECURITY.md](SECURITY.md) về bảo vệ runtime, giới hạn lưu trữ và rủi ro còn lại.

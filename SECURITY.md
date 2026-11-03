@@ -15,3 +15,19 @@ There is no guaranteed response SLA. This is a personal open-source project, not
 Current releases are ad-hoc signed and not notarized. Do not mistake this for verified Developer ID distribution. Verify the release checksum and review the source/workflow before granting Accessibility. Do not disable Gatekeeper globally.
 
 Build/release Actions are pinned to commit SHAs. Pull-request checks have read-only permissions. Only the release publishing job can write release assets. No production signing credentials are required for the current pipeline. A successful CI run does not prove every input field is safe or that every synthetic paste was delivered.
+
+## Runtime and storage boundaries
+
+Release 1.0.6 enables Hardened Runtime with no runtime exception entitlements. The distributed app has no debugger entitlement, plug-in loader, shell execution, updater, embedded web renderer or third-party package dependency. It uses OS frameworks and system SQLite. Hardened Runtime reduces injection risk; it does not certify that an app has no vulnerabilities. See [Apple's runtime documentation](https://developer.apple.com/documentation/security/hardened-runtime).
+
+History directories are owner-only (0700); stored payloads/thumbnails and existing database files are restricted to 0600. Database-derived payload and thumbnail names must be flat relative paths in the expected subdirectory; symlink redirection is rejected. This is defense against corrupted metadata, not a security boundary against malware already executing as the same user or an administrator.
+
+SQLite secure_delete is enabled before future deletes/updates; Clear All also requests a WAL truncate checkpoint. This reduces residual database text, but is **not guaranteed secure erasure** of APFS snapshots, SSD blocks, backups or previously copied files. History remains unencrypted. [SQLite documents the scope of secure_delete](https://www.sqlite.org/pragma.html#pragma_secure_delete).
+
+Clipboard monitoring skips changes observed during Secure Event Input and rejects marked sensitive types. Accessibility reads focused roles and geometry, not field text; Auto Paste synthesizes only Command+V after foreground/permission checks. Unmarked secrets and apps with misleading metadata remain a limitation. Clipboard HTML/RTF is stored and restored as data; SwiftClip does not execute it. The receiving app determines how pasted formats are handled.
+
+## Publication checks
+
+Publication auditing covers the current file set plus all reachable Git history in CI. It checks high-confidence credentials, private home paths, personal email addresses, generated files and commit email hygiene. Automated patterns cannot recognize every possible secret; manually review code, comments, docs and asset metadata before publication. Public GitHub handles, repository links, copyright attribution and GitHub noreply commit identities are intentionally public. Generated icon provenance identifies its AI provider/certificate authority, not the user's account.
+
+This project has not received an independent penetration test or malware laboratory certification. Code review, tests, checksums and build isolation reduce specific risks; they cannot guarantee protection on an already compromised Mac or GitHub account. Keep macOS/Xcode patched and protect the repository account with strong authentication. Signing/notarization and a separately reviewed encrypted store remain future work.

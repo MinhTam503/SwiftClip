@@ -38,7 +38,7 @@ final class ClipboardMonitor {
     let observed = pb.changeCount
     guard observed != count else { return }
     count = observed
-    guard !settings.bool("paused") else { return }
+    guard !settings.bool("paused"), !IsSecureEventInputEnabled() else { return }
     let source = sourceApp()
     let ignored = settings.string("ignored").split(whereSeparator: { $0 == "\n" || $0 == "," }).map
     { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
