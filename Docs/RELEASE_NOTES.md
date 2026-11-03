@@ -1,5 +1,10 @@
 # Release notes
 
+## 1.0.5
+
+- Include the MIT license inside the installed app bundle as well as the source repository.
+- Public distribution uses the audited, pinned GitHub Actions pipeline. Clipboard and UI behavior remain unchanged from 1.0.4.
+
 ## 1.0.4
 
 - English and Vietnamese UI with an immediate, persisted language selection.

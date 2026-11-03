@@ -21,6 +21,7 @@ trap 'rm -rf "$stage"' EXIT
 xcodebuild -project SwiftClip.xcodeproj -scheme SwiftClip -configuration Release -derivedDataPath .build/ReleaseApp -destination 'generic/platform=macOS' ARCHS='arm64 x86_64' ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=NO build > "$stage/build.log" 2>&1 || { tail -80 "$stage/build.log"; exit 1; }
 built='.build/ReleaseApp/Build/Products/Release/SwiftClip.app'
 [[ -x "$built/Contents/MacOS/SwiftClip" ]]
+[[ -f "$built/Contents/Resources/LICENSE" ]]
 ditto "$built" "$stage/SwiftClip.app"
 codesign --force --sign - --timestamp=none "$stage/SwiftClip.app"
 codesign --verify --deep --strict "$stage/SwiftClip.app"
