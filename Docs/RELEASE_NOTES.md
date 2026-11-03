@@ -1,5 +1,11 @@
 # Release notes
 
+## 1.0.8
+
+- Reopening clipboard history highlights the first visible item instead of restoring the last clicked item. Pinned ordering remains unchanged.
+- New search queries highlight their first result; no results means no selection.
+- Background history refresh preserves navigation within the same opening; pending searches cannot paste a stale selection.
+
 ## 1.0.7
 
 - Clear All uses a confirmation sheet and keeps clipboard history open after cancellation or deletion.

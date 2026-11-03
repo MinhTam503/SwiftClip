@@ -42,7 +42,7 @@ For additional control, review the source and [build it yourself](#build-from-so
 
 ## Usage
 
-Copy something in another app, then click the menu bar icon or press **⌘⇧V**. Search the history and click an item to use it.
+Copy something in another app, then click the menu bar icon or press **⌘⇧V**. Search the history and click an item to use it. Each opening highlights the first visible item (pins first, then most recent history) while typing focus stays in search. Highlighting alone never pastes. A new query starts at its first result; background refresh keeps your current selection.
 
 | Action | Default |
 | --- | --- |

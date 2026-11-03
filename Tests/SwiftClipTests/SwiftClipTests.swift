@@ -607,6 +607,68 @@ final class SwiftClipTests: XCTestCase {
     session.start()
     XCTAssertEqual(sends, 0)
   }
+  func testPopupSelectionResetsOnReopenAndSearchButSurvivesRefresh() throws {
+    let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    let model = HistoryModel(root: root)
+    defer {
+      model.release()
+      model.queue.sync {}
+      try? FileManager.default.removeItem(at: root)
+    }
+    model.save(payload("matching older"), kind: "text", preview: "matching older", source: "test")
+    model.save(payload("matching newer"), kind: "text", preview: "matching newer", source: "test")
+    model.queue.sync {}
+    func load() {
+      let done = expectation(description: "history loaded")
+      model.onRowsChanged = { done.fulfill() }
+      model.load()
+      wait(for: [done], timeout: 3)
+      model.onRowsChanged = nil
+    }
+    model.beginPresentation()
+    load()
+    XCTAssertEqual(model.clips.count, 2)
+    XCTAssertEqual(model.selected, model.clips.first?.id)
+    let older = try XCTUnwrap(model.clips.last?.id)
+    model.selected = older
+    load()
+    XCTAssertEqual(
+      model.selected, older, "Background refresh preserves navigation in the same opening")
+    model.release()
+    XCTAssertNil(model.selected)
+    model.beginPresentation()
+    load()
+    XCTAssertEqual(model.selected, model.clips.first?.id)
+    XCTAssertNotEqual(model.selected, older)
+    model.selected = older
+    model.query = "matching"
+    load()
+    XCTAssertEqual(model.selected, model.clips.first?.id, "A new query starts at its first result")
+    model.query = "no synthetic result"
+    load()
+    XCTAssertNil(model.selected)
+    model.query = ""
+    load()
+    XCTAssertEqual(model.selected, model.clips.first?.id)
+    model.selected = older
+    model.query = "matching newer"
+    model.search()
+    XCTAssertNil(model.selected, "Do not paste an old selection during search debounce")
+    model.release()
+    model.beginPresentation()
+    load()
+    XCTAssertEqual(model.selected, model.clips.first?.id)
+    model.perform { repo in
+      if let clip = try repo.list().first(where: { $0.id == older }) { try repo.pin(clip) }
+    }
+    model.queue.sync {}
+    model.release()
+    model.beginPresentation()
+    load()
+    XCTAssertEqual(
+      model.selected, older, "The first visible pinned item follows the same opening policy")
+  }
+
   func testClearConfirmationKeepsPopupOpenOnCancelAndConfirm() throws {
     _ = NSApplication.shared
     let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)

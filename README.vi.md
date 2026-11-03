@@ -128,3 +128,5 @@ License [MIT](LICENSE). Icon được kèm trong dự án, prompt tạo nằm �
 Xem [SECURITY.md](SECURITY.md) về bảo vệ runtime, giới hạn lưu trữ và rủi ro còn lại.
 
 Kéo vùng tiêu đề SwiftClip để di chuyển popup. Vị trí được giữ khi danh sách cập nhật trong lần mở đó; mở lại sẽ tự chọn vị trí tránh ô nhập. Xóa tất cả hoặc hủy xác nhận đều giữ popup danh sách mở.
+
+Mỗi lần mở popup sẽ đánh dấu mục đầu tiên đang hiển thị (ghim trước, rồi lịch sử mới nhất), con trỏ nhập vẫn ở ô tìm kiếm. Đánh dấu không tự dán; cần Enter hoặc click. Đổi từ khóa chọn kết quả đầu tiên, còn cập nhật nền giữ lựa chọn đang điều hướng.

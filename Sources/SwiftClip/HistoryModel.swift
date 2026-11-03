@@ -11,10 +11,17 @@ final class HistoryModel: ObservableObject {
   @Published var pageOffset = 0
   @Published private(set) var openedAt = Date()
   var onRowsChanged: (() -> Void)?
-  func beginPresentation(at date: Date = Date()) { openedAt = date }
+  func beginPresentation(at date: Date = Date()) {
+    generation += 1
+    searchWork?.cancel()
+    selected = nil
+    loadedQuery = nil
+    openedAt = date
+  }
   let queue = DispatchQueue(label: "com.personal.swiftclip.storage", qos: .utility)
   private var repository: Repository?
   private var generation = 0
+  private var loadedQuery: String?
   private var searchWork: DispatchWorkItem?
   var onChange: (() -> Void)?
   init(root: URL? = nil) {
@@ -47,6 +54,8 @@ final class HistoryModel: ObservableObject {
   }
   func search() {
     searchWork?.cancel()
+    generation += 1
+    selected = nil
     let work = DispatchWorkItem { [weak self] in self?.load() }
     searchWork = work
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.15, execute: work)
@@ -65,10 +74,11 @@ final class HistoryModel: ObservableObject {
           self.clips = rows
           self.pageOffset = offset
           self.hasMore = rows.count == 60
-          self.onRowsChanged?()
-          if !self.clips.contains(where: { $0.id == self.selected }) {
-            self.selected = self.clips.first?.id
+          if self.loadedQuery != q || !rows.contains(where: { $0.id == self.selected }) {
+            self.selected = rows.first?.id
           }
+          self.loadedQuery = q
+          self.onRowsChanged?()
         }
       } catch { DispatchQueue.main.async { self.notice = .error(error, .operationFailed) } }
     }
@@ -77,6 +87,8 @@ final class HistoryModel: ObservableObject {
     generation += 1
     searchWork?.cancel()
     clips = []
+    selected = nil
+    loadedQuery = nil
     hasMore = false
     pageOffset = 0
     query = ""
@@ -94,7 +106,7 @@ final class HistoryModel: ObservableObject {
     }
   }
   func move(_ delta: Int) {
-    guard !clips.isEmpty else { return }
+    guard !clips.isEmpty, loadedQuery == query else { return }
     let i = clips.firstIndex { $0.id == selected } ?? 0
     selected = clips[max(0, min(clips.count - 1, i + delta))].id
   }
