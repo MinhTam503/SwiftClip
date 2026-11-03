@@ -1,0 +1,2 @@
+Generated with built-in image_gen.
+Use case: logo-brand. Create one polished native macOS application icon for SwiftClip, a private fast clipboard history manager. Centered softly rounded deep graphite square with subtle dimensional bevel, elegant ivory clipboard outline and small warm amber lightning-shaped folded paper mark. Bold simple silhouette, legible at 16px, restrained native materials, generous margin, crisp edges. No text, letters, watermark, mockup or scene. Transparent outside the tile.
