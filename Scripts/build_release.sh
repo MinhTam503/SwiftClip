@@ -25,7 +25,8 @@ built='.build/ReleaseApp/Build/Products/Release/SwiftClip.app'
 ditto "$built" "$stage/SwiftClip.app"
 codesign --force --sign - --options runtime --timestamp=none "$stage/SwiftClip.app"
 codesign --verify --deep --strict "$stage/SwiftClip.app"
-codesign -dv "$stage/SwiftClip.app" 2>&1 | grep -q 'flags=.*runtime'
+codesign -dv "$stage/SwiftClip.app" > "$stage/signature.txt" 2>&1
+grep -q 'flags=.*runtime' "$stage/signature.txt"
 codesign -d --entitlements - "$stage/SwiftClip.app" > "$stage/entitlements.plist" 2>/dev/null
 python3 - "$stage/entitlements.plist" <<'PY_ENTITLEMENTS'
 import pathlib, plistlib, sys

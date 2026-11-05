@@ -7,8 +7,8 @@
 3. Update `Docs/RELEASE_NOTES.md`, test and commit the release metadata.
 4. Push a tag that exactly matches the app version:
    ```sh
-   git tag -a v1.0.9 -m "SwiftClip 1.0.9"
-   git push origin v1.0.9
+   git tag -a v1.0.11 -m "SwiftClip 1.0.11"
+   git push origin v1.0.11
    ```
 5. Watch the **Release** workflow. It audits/tests the source, builds an Apple Silicon + Intel DMG, verifies the signature/resources/image checksum and uploads an Actions artifact.
 6. The publish job verifies the downloaded checksum, creates a draft release with the DMG/checksum asset, then publishes it. Download and manually validate the release on a Mac.

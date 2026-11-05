@@ -118,3 +118,8 @@
 "payloadUnavailable" = "Dữ liệu clipboard không còn khả dụng (lỗi %@).";
 "operationFailed" = "Thao tác thất bại (lỗi %@).";
 "shortcuts" = "Phím tắt";
+
+"reverseMouseScroll" = "Đảo chiều cuộn chuột";
+"reverseMouseScrollHint" = "Đảo chiều bánh xe chuột, giữ nguyên thao tác cuộn trackpad. Tắt đảo chiều trong tiện ích chuột khác.";
+"mouseScrollPermission" = "Cấp quyền Accessibility cho SwiftClip, sau đó quay lại cửa sổ này.";
+"mouseScrollUnavailable" = "Chưa khởi động được đảo chiều cuộn chuột. Tắt rồi bật lại để thử.";

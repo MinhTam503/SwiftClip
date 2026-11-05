@@ -130,3 +130,11 @@ Xem [SECURITY.md](SECURITY.md) về bảo vệ runtime, giới hạn lưu trữ 
 Kéo vùng tiêu đề SwiftClip để di chuyển popup. Vị trí được giữ khi danh sách cập nhật trong lần mở đó; mở lại sẽ tự chọn vị trí tránh ô nhập. Xóa tất cả hoặc hủy xác nhận đều giữ popup danh sách mở.
 
 Mỗi lần mở popup sẽ đánh dấu mục đầu tiên đang hiển thị (ghim trước, rồi lịch sử mới nhất), con trỏ nhập vẫn ở ô tìm kiếm. Đánh dấu không tự dán; cần Enter hoặc click. Đổi từ khóa chọn kết quả đầu tiên, còn cập nhật nền giữ lựa chọn đang điều hướng.
+
+### Đảo chiều cuộn chuột (từ 1.0.9)
+
+Bật **Settings → General → Đảo chiều cuộn chuột** để đảo chiều bánh xe trên hai trục, giữ nguyên Natural Scrolling của hệ thống và gesture trackpad. Mặc định tắt, cần Accessibility. Tắt đảo chiều trong LinearMouse/tiện ích khác trước khi dùng để tránh đảo hai lần.
+
+Bản gọn này chỉ xử lý sự kiện bánh xe dạng nấc; cuộn liên tục, gesture và momentum đi qua nguyên trạng. Magic Mouse hoặc driver biến bánh xe thành cuộn liên tục chưa được xử lý. Không thêm danh sách thiết bị, polling hay luồng riêng. Cần kiểm tra thực tế với chuột và trackpad đang sử dụng.
+
+Chọn item để Dán hoặc Sao chép sẽ đưa mục đó lên đầu lịch sử sau khi ghi clipboard thành công; mục ghim vẫn ưu tiên. Xem trước không đổi thứ tự và không tạo bản trùng.

@@ -121,6 +121,40 @@ final class SwiftClipTests: XCTestCase {
       XCTAssertEqual(try repo.list().count, 0)
     }
   }
+  func testReusedFifthItemMovesFirstWithoutDuplicatingOrRewritingPayload() throws {
+    try withRepository { repo, root in
+      for n in 0..<6 {
+        try repo.save(
+          payload("reuse item \(n)"), kind: "text", preview: "reuse item \(n)", source: "test",
+          limit: 0)
+      }
+      let before = try repo.list()
+      let fifth = before[4]
+      let file = root.appendingPathComponent(fifth.path)
+      let original = try Data(contentsOf: file)
+      let modified =
+        try FileManager.default.attributesOfItem(atPath: file.path)[.modificationDate] as? Date
+      try repo.promote(fifth.id)
+      let after = try repo.list()
+      XCTAssertEqual(after.first?.id, fifth.id)
+      XCTAssertEqual(after.count, before.count)
+      XCTAssertEqual(after.dropFirst().map(\.id), before.filter { $0.id != fifth.id }.map(\.id))
+      XCTAssertEqual(try Data(contentsOf: file), original)
+      XCTAssertEqual(
+        try FileManager.default.attributesOfItem(atPath: file.path)[.modificationDate] as? Date,
+        modified)
+      XCTAssertEqual(try Repository(root: root).list().first?.id, fifth.id)
+      try repo.promote(fifth.id)
+      XCTAssertEqual(try repo.list().count, before.count)
+      try repo.pin(after[1])
+      try repo.promote(fifth.id)
+      let pinnedOrder = try repo.list()
+      XCTAssertTrue(pinnedOrder[0].pinned)
+      XCTAssertEqual(pinnedOrder[1].id, fifth.id)
+      XCTAssertFalse(pinnedOrder[1].pinned)
+    }
+  }
+
   func testPaginationAndOrphanCleanup() throws {
     try withRepository { repo, root in
       for n in 0..<70 {

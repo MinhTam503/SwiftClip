@@ -51,3 +51,13 @@ Chạy `Scripts/benchmark.sh` khi không có phiên Instruments hoặc UI automa
 Dùng Xcode Memory Graph kiểm tra AppDelegate, NSPanel và hosting views sau nhiều lần đóng popup. Allocations/Leaks chạy qua `Scripts/profile.sh` trên bản sao có entitlement debugger; không dùng số đo của phiên có instrumentation làm RAM baseline. Phiên benchmark dùng caffeinate tạm thời để tránh idle sleep và ghi riêng thời gian monotonic/wall-clock. Nếu máy bị sleep, kết quả bị đánh dấu không hợp lệ.
 
 Activity Monitor: kiểm tra CPU và cột Memory của đúng tiến trình; RSS từ `ps` là chỉ số khác physical footprint. Cần thử thêm qua nhiều giờ/ngày và trên macOS 13/Intel để nghiệm thu tương thích đầy đủ.
+
+## Đảo chiều cuộn chuột (1.0.9+)
+
+1. Tắt đảo chiều trong tiện ích khác; giữ nguyên Natural Scrolling hiện tại. Dùng nội dung thử có thể cuộn trong Safari/TextEdit.
+2. Mặc định tùy chọn General tắt: chuột và trackpad phải giữ hành vi cũ.
+3. Bật tùy chọn, cấp Accessibility nếu được yêu cầu rồi quay lại Settings: chuột bánh xe đảo hướng, trackpad hai ngón và momentum không đổi. Thử xen kẽ nhiều lần, trục ngang và Shift + wheel.
+4. Tắt tùy chọn: hành vi cũ trở lại ngay; quit app không để lại thay đổi cài đặt hệ thống. Bật lại và restart app để kiểm tra lưu tùy chọn.
+5. Thử sleep/wake và thu hồi/cấp lại Accessibility; kiểm tra thông báo thất bại và khôi phục khi trở lại cửa sổ app. Tiếp tục kiểm tra hotkey, search, paste, kéo popup và Clear All.
+6. Magic Mouse/driver cuộn mượt có thể cung cấp sự kiện liên tục, bản này chủ động bỏ qua. Không tuyên bố nhận diện mọi thiết bị từ cờ IsContinuous.
+7. Đo cùng chỉ số memory footprint/CPU với tùy chọn tắt/bật, cùng lịch sử và thời lượng. Không coi ước lượng RAM là số đo đã nghiệm thu.

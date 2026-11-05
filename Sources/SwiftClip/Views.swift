@@ -271,6 +271,7 @@ struct SettingsView: View {
           Button(L10n.t(.openLoginSettings)) { SMAppService.openSystemSettingsLoginItems() }
           Toggle(L10n.t(.showMenuIcon), isOn: bool("menu", true))
           Toggle(L10n.t(.startBackground), isOn: bool("background", true))
+          MouseScrollSettingView(controller: app.mouseScroll, enabled: bool("reverseMouseScroll"))
           Toggle(L10n.t(.copyOnly), isOn: bool("copyOnly"))
           Toggle(L10n.t(.closeAfterSelection), isOn: bool("closeAfter", true))
           Picker(L10n.t(.appearance), selection: string("appearance")) {
@@ -435,5 +436,23 @@ final class KeyCapture: NSView {
   override func performKeyEquivalent(with event: NSEvent) -> Bool {
     captured?(event)
     return true
+  }
+}
+
+struct MouseScrollSettingView: View {
+  @ObservedObject var controller: MouseScrollReverser
+  @Binding var enabled: Bool
+  var body: some View {
+    Toggle(L10n.t(.reverseMouseScroll), isOn: $enabled)
+    Text(L10n.t(.reverseMouseScrollHint)).font(.caption).foregroundStyle(.secondary)
+    if enabled && controller.state != .active {
+      Text(
+        L10n.t(
+          controller.state == .permissionRequired ? .mouseScrollPermission : .mouseScrollUnavailable
+        )
+      )
+      .font(.caption).foregroundStyle(.secondary)
+      Button(L10n.t(.openAccessibility)) { PasteManager.openAccessibility() }
+    }
   }
 }

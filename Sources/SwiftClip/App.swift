@@ -20,6 +20,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     super.init()
   }
   let monitor = ClipboardMonitor()
+  let mouseScroll = MouseScrollReverser()
   let hotkey = HotkeyManager()
   var status: NSStatusItem?
   var panel: NSPanel?
@@ -69,8 +70,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     show()
     return true
   }
+  func refreshMouseScrolling() {
+    let diagnostic = ProcessInfo.processInfo.arguments.contains { $0.hasPrefix("--diagnostic") }
+    mouseScroll.configure(enabled: !diagnostic && Settings.shared.bool("reverseMouseScroll"))
+  }
+  func applicationDidBecomeActive(_ notification: Notification) { refreshMouseScrolling() }
   func applySettings() {
     monitor.start()
+    refreshMouseScrolling()
     if !ProcessInfo.processInfo.arguments.contains(where: { $0.hasPrefix("--diagnostic") }) {
       do {
         try hotkey.register(key: Settings.shared.key, modifiers: Settings.shared.modifiers)
@@ -328,6 +335,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         return
       }
       self.monitor.suppressCurrent()
+      self.model.perform { try $0.promote(clip.id) }
       self.recordUIEvent("clipboard_written")
       let auto = !copyOnly && !Settings.shared.bool("copyOnly")
       let keepOpen = auto && !Settings.shared.bool("closeAfter", true)
@@ -424,6 +432,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
   }
   func applicationWillTerminate(_ notification: Notification) {
     monitor.stop()
+    mouseScroll.stop()
     if let languageObserver { NotificationCenter.default.removeObserver(languageObserver) }
     model.queue.sync {}
   }

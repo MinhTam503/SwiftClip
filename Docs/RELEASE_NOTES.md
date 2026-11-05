@@ -1,5 +1,19 @@
 # Release notes
 
+## 1.0.10
+
+- Successfully copying a selected history item promotes that existing item like a fresh copy, including Copy Only and manual-paste fallback.
+- Pinned priority is preserved. Preview alone does not promote; failed clipboard writes do not promote.
+- Only the row timestamp changes; payload files are not rewritten or duplicated.
+
+## 1.0.9 (included in 1.0.10)
+
+- Optional Reverse mouse scrolling toggle in General (English/Vietnamese), off by default.
+- Reverse discrete wheel deltas on both axes; leave continuous/gesture/momentum scrolling unchanged.
+- Scroll-only event tap is removed when disabled; no new polling, worker thread or dependency.
+- Uses Accessibility permission and retries when the app becomes active or the system wakes.
+- Continuous scrolling mice/driver-smoothed events are conservatively left unchanged; disable reversal in other utilities.
+
 ## 1.0.8
 
 - Reopening clipboard history highlights the first visible item instead of restoring the last clicked item. Pinned ordering remains unchanged.

@@ -233,6 +233,14 @@ final class Repository {
         contentsOf: HistoryFiles.url(
           root: root, path: clip.path, directory: "Payloads", suffix: ".json")))
   }
+  /// Reuse promotes the existing row; payloads, creation time and pin state stay intact.
+  func promote(_ id: String) throws {
+    let s = try statement("UPDATE clips SET updated=? WHERE id=?")
+    defer { sqlite3_finalize(s) }
+    sqlite3_bind_double(s, 1, Date().timeIntervalSince1970)
+    bind(s, 2, id)
+    try run(s)
+  }
   func pin(_ clip: Clip) throws {
     let s = try statement("UPDATE clips SET pinned=? WHERE id=?")
     defer { sqlite3_finalize(s) }

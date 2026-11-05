@@ -110,6 +110,10 @@ enum L10n {
     case older
     case popupKeys
     case escapeClose
+    case reverseMouseScroll
+    case reverseMouseScrollHint
+    case mouseScrollPermission
+    case mouseScrollUnavailable
     case general
     case launchAtLogin
     case openLoginSettings

@@ -70,7 +70,7 @@ Auto Paste requires **System Settings → Privacy & Security → Accessibility**
 
 ### Settings
 
-- **General:** language (System / English / Tiếng Việt), Launch at Login, menu bar icon, background startup, Copy Only, close-after-selection and appearance.
+- **General:** optional mouse-wheel scroll reversal, language (System / English / Tiếng Việt), Launch at Login, menu bar icon, background startup, Copy Only, close-after-selection and appearance.
 - **Shortcuts:** record Open Clipboard, Focus Search and Paste Selected; restore defaults if needed. Some app-local shortcut conflicts cannot be detected by Carbon.
 - **History:** 100 / 500 / 1,000 / unlimited items, capture-size cap and age retention. Pins survive automatic cleanup; Clear All includes pins and asks for confirmation.
 - **Privacy:** pause monitoring, ignored bundle IDs (one per line) and polling interval (250 / 500 / 1,000 ms).
@@ -147,3 +147,11 @@ For a suspected vulnerability or disclosure risk, follow [SECURITY.md](SECURITY.
 [MIT](LICENSE). The application icon is included with this project; its generation prompt is in `Resources/ICON_PROMPT.txt`.
 
 See [SECURITY.md](SECURITY.md) for runtime protections, storage boundaries and remaining limitations.
+
+### Optional mouse-wheel reversal (1.0.9+)
+
+Enable **Settings → General → Reverse mouse scrolling** to reverse the wheel without changing the system Natural Scrolling preference or trackpad gestures. Off by default; requires Accessibility. Disable equivalent reversal in LinearMouse/other utilities first to prevent double reversal.
+
+This lightweight implementation handles discrete wheel events on both axes. Continuous scrolling, touch gestures and momentum are passed through; Magic Mouse and drivers that convert wheel input to continuous scrolling are not covered by this option. No device inventory, background polling or extra worker thread is used. Source review and synthetic tests do not replace a live check with your physical mouse and trackpad.
+
+Selecting an item for Paste or Copy promotes the existing history entry after a successful clipboard write; pinned entries retain priority. Preview does not change history order.

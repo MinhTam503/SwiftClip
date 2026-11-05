@@ -118,3 +118,8 @@
 "payloadUnavailable" = "Clipboard data is unavailable (error %@).";
 "operationFailed" = "Operation failed (error %@).";
 "shortcuts" = "Shortcuts";
+
+"reverseMouseScroll" = "Reverse mouse scrolling";
+"reverseMouseScrollHint" = "Reverse mouse-wheel scrolling without changing trackpad gestures. Turn off reversal in other mouse utilities.";
+"mouseScrollPermission" = "Allow SwiftClip in Accessibility, then return to this window.";
+"mouseScrollUnavailable" = "Mouse scroll reversal could not start. Toggle it off and on to retry.";
