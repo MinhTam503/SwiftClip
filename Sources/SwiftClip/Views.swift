@@ -73,7 +73,7 @@ struct PopupView: View {
                     Button(L10n.t(.preview)) { app.preview(clip) }
                     Divider()
                     Button(L10n.t(.deleteItem), role: .destructive) {
-                      model.perform { try $0.delete(clip.id) }
+                      app.deleteClip(clip)
                     }
                   }.id(clip.id)
               }
@@ -279,6 +279,7 @@ struct SettingsView: View {
             Text(L10n.t(.light)).tag("Light")
             Text(L10n.t(.dark)).tag("Dark")
           }
+          LabeledContent(L10n.t(.appVersion), value: appVersion)
         }
         Section(L10n.t(.paste)) {
           Text(PasteManager.trusted ? L10n.t(.accessibilityGranted) : L10n.t(.accessibilityDenied))
@@ -392,6 +393,19 @@ struct SettingsView: View {
         Text(model.message).font(.caption).foregroundStyle(.red).padding(8).background(
           .regularMaterial)
       }
+    }
+  }
+  private var appVersion: String {
+    let info = Bundle.main.infoDictionary
+    let short = info?["CFBundleShortVersionString"] as? String
+    let build = info?["CFBundleVersion"] as? String
+    switch (short, build) {
+    case let (s?, b?) where !s.isEmpty && !b.isEmpty:
+      return "\(s) (\(b))"
+    case let (s?, _) where !s.isEmpty:
+      return s
+    default:
+      return "—"
     }
   }
   var statusText: String {

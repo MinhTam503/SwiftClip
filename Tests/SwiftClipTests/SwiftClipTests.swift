@@ -121,6 +121,29 @@ final class SwiftClipTests: XCTestCase {
       XCTAssertEqual(try repo.list().count, 0)
     }
   }
+  func testClearPreservesPinnedItemsUntilUnpinned() throws {
+    try withRepository { repo, root in
+      try repo.save(payload("Pinned"), kind: "text", preview: "Pinned", source: "test", limit: 0)
+      try repo.save(payload("Unpinned"), kind: "text", preview: "Unpinned", source: "test", limit: 0)
+      let clips = try repo.list()
+      let pinnedClip = try XCTUnwrap(clips.first(where: { $0.preview == "Pinned" }))
+      let unpinnedClip = try XCTUnwrap(clips.first(where: { $0.preview == "Unpinned" }))
+      try repo.pin(pinnedClip)
+      try repo.clear()
+      let remaining = try repo.list()
+      XCTAssertEqual(remaining.map(\.id), [pinnedClip.id])
+      XCTAssertTrue(
+        FileManager.default.fileExists(atPath: root.appendingPathComponent(pinnedClip.path).path))
+      XCTAssertFalse(
+        FileManager.default.fileExists(atPath: root.appendingPathComponent(unpinnedClip.path).path))
+      let updatedPinned = try XCTUnwrap(remaining.first)
+      try repo.pin(updatedPinned)
+      try repo.clear()
+      XCTAssertEqual(try repo.list().count, 0)
+      XCTAssertFalse(
+        FileManager.default.fileExists(atPath: root.appendingPathComponent(pinnedClip.path).path))
+    }
+  }
   func testReusedFifthItemMovesFirstWithoutDuplicatingOrRewritingPayload() throws {
     try withRepository { repo, root in
       for n in 0..<6 {

@@ -274,7 +274,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
       if event.keyCode == 51 && event.modifierFlags.contains(.command),
         let clip = self.model.clips.first(where: { $0.id == self.model.selected })
       {
-        self.model.perform { try $0.delete(clip.id) }
+        self.deleteClip(clip)
         return nil
       }
       return event
@@ -366,23 +366,60 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     NSApp.activate(ignoringOtherApps: true)
     if alert.runModal() == .alertSecondButtonReturn { PasteManager.openAccessibility() }
   }
+  func deleteClip(_ clip: Clip) {
+    guard clip.pinned else {
+      model.perform { try $0.delete(clip.id) }
+      return
+    }
+    guard !historyConfirmationInFlight else { return }
+    let alert = NSAlert()
+    alert.messageText = L10n.t(.deletePinnedTitle)
+    alert.informativeText = L10n.t(.deletePinnedBody)
+    alert.addButton(withTitle: L10n.t(.cancel))
+    alert.addButton(withTitle: L10n.t(.deleteItem))
+    presentConfirmation(alert) { [weak self] response, _ in
+      if response == .alertSecondButtonReturn {
+        self?.model.perform { try $0.delete(clip.id) }
+      }
+    }
+  }
   func clearHistory() {
+    if Settings.shared.bool("skipClearAllConfirm") {
+      model.perform { try $0.clear() }
+      return
+    }
     guard !historyConfirmationInFlight else { return }
     let alert = NSAlert()
     alert.messageText = L10n.t(.clearAllTitle)
     alert.informativeText = L10n.t(.clearAllBody)
+    alert.showsSuppressionButton = true
+    alert.suppressionButton?.title = L10n.t(.dontShowAgain)
     alert.addButton(withTitle: L10n.t(.cancel))
     alert.addButton(withTitle: L10n.t(.clearAllConfirm))
+    presentConfirmation(alert) { [weak self] response, suppress in
+      guard let self else { return }
+      if response == .alertSecondButtonReturn {
+        if suppress { Settings.shared.set("skipClearAllConfirm", true) }
+        self.model.perform { try $0.clear() }
+      }
+    }
+  }
+  private func presentConfirmation(
+    _ alert: NSAlert, completion: @escaping (NSApplication.ModalResponse, Bool) -> Void
+  ) {
     if let panel {
       historyConfirmationInFlight = true
       alert.beginSheetModal(for: panel) { [weak self, weak panel] response in
         guard let self else { return }
         self.historyConfirmationInFlight = false
-        if response == .alertSecondButtonReturn { self.model.perform { try $0.clear() } }
+        let suppress = alert.suppressionButton?.state == .on
+        completion(response, suppress)
         if let panel, self.panel === panel { panel.makeKeyAndOrderFront(nil) }
       }
-    } else if alert.runModal() == .alertSecondButtonReturn {
-      model.perform { try $0.clear() }
+    } else {
+      let response = alert.runModal()
+      let suppress = alert.suppressionButton?.state == .on
+      completion(response, suppress)
     }
   }
   func preview(_ clip: Clip) {

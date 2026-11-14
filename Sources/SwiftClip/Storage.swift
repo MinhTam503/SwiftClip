@@ -269,7 +269,7 @@ final class Repository {
     }
   }
   func clear() throws {
-    try exec("DELETE FROM clips; PRAGMA wal_checkpoint(TRUNCATE);")
+    try exec("DELETE FROM clips WHERE pinned=0; PRAGMA wal_checkpoint(TRUNCATE);")
     try cleanupOrphans()
   }
   func cleanup(limit: Int, days: Int = 0) throws {

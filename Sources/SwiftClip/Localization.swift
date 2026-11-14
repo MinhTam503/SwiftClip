@@ -172,6 +172,10 @@ enum L10n {
     case clearAllTitle
     case clearAllBody
     case clearAllConfirm
+    case dontShowAgain
+    case deletePinnedTitle
+    case deletePinnedBody
+    case appVersion
     case benchmarkName
     case benchmarkTip
     case editMenu

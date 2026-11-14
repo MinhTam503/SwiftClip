@@ -77,8 +77,12 @@
 "ok" = "OK";
 "cancel" = "Cancel";
 "clearAllTitle" = "Clear all history?";
-"clearAllBody" = "Pinned items are included. This action cannot be undone.";
+"clearAllBody" = "Pinned items are kept. Unpin items to include them. This action cannot be undone.";
 "clearAllConfirm" = "Clear All";
+"dontShowAgain" = "Don't show again";
+"deletePinnedTitle" = "Delete pinned item?";
+"deletePinnedBody" = "This item is pinned. Are you sure you want to delete it?";
+"appVersion" = "Version";
 "benchmarkName" = "SwiftClip Benchmark";
 "benchmarkTip" = "SwiftClip Benchmark — exits automatically after about 11 minutes";
 "editMenu" = "Edit";

@@ -77,8 +77,12 @@
 "ok" = "Đồng ý";
 "cancel" = "Hủy";
 "clearAllTitle" = "Xóa toàn bộ lịch sử?";
-"clearAllBody" = "Bao gồm cả nội dung đã ghim. Thao tác này không thể hoàn tác.";
+"clearAllBody" = "Các mục đã ghim sẽ được giữ lại. Bỏ ghim nếu muốn xóa tất cả. Thao tác này không thể hoàn tác.";
 "clearAllConfirm" = "Xóa tất cả";
+"dontShowAgain" = "Không hiển thị lại";
+"deletePinnedTitle" = "Xóa mục đã ghim?";
+"deletePinnedBody" = "Mục này đã được ghim. Bạn có chắc chắn muốn xóa không?";
+"appVersion" = "Phiên bản";
 "benchmarkName" = "Đo hiệu năng SwiftClip";
 "benchmarkTip" = "Đo hiệu năng SwiftClip — tự thoát sau khoảng 11 phút";
 "editMenu" = "Sửa";
