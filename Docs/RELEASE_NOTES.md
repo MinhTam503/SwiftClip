@@ -1,5 +1,12 @@
 # Release notes
 
+## 1.0.11
+
+- Display the current app version in General Settings.
+- Keep pinned items when clearing all history; unpin items to include them in Clear All.
+- Deleting an individual pinned item (via context menu or Command+Delete) now prompts for confirmation.
+- Add a "Don't show again" checkbox to the Clear All confirmation dialog to skip future prompts when checked.
+
 ## 1.0.10
 
 - Successfully copying a selected history item promotes that existing item like a fresh copy, including Copy Only and manual-paste fallback.
